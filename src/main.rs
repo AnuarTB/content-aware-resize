@@ -1,5 +1,7 @@
+extern crate clap;
 extern crate image;
 
+use clap::{App, Arg};
 use image::{Rgb, RgbImage};
 
 fn euclid_dist(a: &Rgb<u8>, b: &Rgb<u8>) -> u32 {
@@ -89,13 +91,40 @@ fn slice_one(img: RgbImage) -> RgbImage {
 }
 
 fn main() {
-    let mut img: RgbImage = image::open("surfer.jpg").unwrap().into_rgb8();
+    let matches = App::new("Content aware CLI tool")
+        .version("0.1")
+        .author("Anuar T. <me@anuartb.com>")
+        .about("Resizes your images in a smart way!")
+        .arg(
+            Arg::with_name("input")
+                .short("i")
+                .value_name("INPUT_FILE")
+                .help("input image path")
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("output")
+                .short("o")
+                .value_name("OUTPUT_FILE")
+                .help("output file name")
+                .default_value("output.jpg"),
+        )
+        .arg(
+            Arg::with_name("dx")
+                .help("By what number of pixels reduce the width of image")
+                .required(true),
+        )
+        .get_matches();
 
-    println!("dimensions {:?}", img.dimensions());
+    let input_file = matches.value_of("input").unwrap();
+    let mut img: RgbImage = image::open(input_file).unwrap().into_rgb8();
 
-    for _ in 0..800 {
+    println!("Dimensions before resizing: {:?}", img.dimensions());
+
+    let iterations = matches.value_of("dx").unwrap().parse::<u32>().unwrap();
+    for _ in 0..iterations {
         img = slice_one(img);
     }
 
-    img.save("surfer_new.jpg").unwrap();
+    img.save(matches.value_of("output").unwrap()).unwrap();
 }
